@@ -116,8 +116,7 @@ npm run deploy
 
 Cette commande build l'app avec OpenNext puis la déploie via Wrangler. L'URL de l'app
 (`https://<nom-du-worker>.<ton-sous-domaine>.workers.dev`) s'affiche à la fin du déploiement.
-Le nom du Worker est défini dans `wrangler.jsonc` (`klayer-decouverte-client` par défaut,
-modifiable librement).
+Le nom du Worker est défini dans `wrangler.jsonc` (`name`), modifiable librement.
 
 ### Tester le build Cloudflare en local (optionnel)
 
@@ -131,9 +130,23 @@ npm run preview
 `.dev.vars` n'est jamais commité (voir `.gitignore`) — c'est l'équivalent de `.env.local` mais
 pour le runtime Wrangler/Workers.
 
-### Déploiement continu (optionnel)
+### Déploiement continu (Workers Builds — connecter le dépôt GitHub)
 
-Pour un déploiement automatique à chaque push, connecte le dépôt GitHub dans le dashboard
-Cloudflare (**Workers & Pages → Create → Connect to Git**) et renseigne `ANTHROPIC_API_KEY`
-dans la section **Build variables and secrets** du projet. Cloudflare exécutera alors
-`npm run deploy` à chaque push sur la branche configurée.
+Pour un déploiement automatique à chaque push, connecte le dépôt dans le dashboard Cloudflare
+(**Workers & Pages → ton projet → Settings → Build**). Cloudflare ne lit **pas** les scripts
+`package.json` par défaut : il faut renseigner explicitement les commandes suivantes dans les
+réglages du projet (Workers Builds ignore la config `wrangler.jsonc` pour les commandes de
+build) :
+
+| Champ            | Valeur                        |
+| ----------------- | ------------------------------ |
+| Build command      | `npm run cf:build`             |
+| Deploy command      | `npx wrangler deploy`          |
+
+> ⚠️ Ne pas laisser **Build command** sur `npm run build` : ça ne lance que `next build`
+> (Next.js classique) et ne génère jamais `.open-next/`, ce dont `wrangler deploy` a besoin —
+> le déploiement échoue alors avec `Could not find compiled Open Next config`.
+
+Renseigne aussi `ANTHROPIC_API_KEY` dans la section **Build variables and secrets** (ou
+**Settings → Variables and Secrets**) du projet, en tant que **secret** (pas variable en clair).
+Cloudflare redéploiera automatiquement à chaque push sur la branche configurée.
