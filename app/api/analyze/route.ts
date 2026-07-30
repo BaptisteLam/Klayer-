@@ -5,7 +5,7 @@ import type { AnalyzeRequestBody, AnalyseResult } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-const MODEL = "claude-sonnet-4-6";
+const MODEL = "claude-sonnet-5";
 
 function extractJson(rawText: string): string {
   const trimmed = rawText.trim();

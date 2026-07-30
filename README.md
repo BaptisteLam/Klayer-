@@ -9,7 +9,7 @@ matrice de priorisation, hypothèses de cas d'usage, prochaines étapes et donn�
 - Next.js 15 (App Router) + TypeScript
 - Route API serveur (`app/api/analyze/route.ts`) qui appelle l'API Anthropic côté serveur
   (la clé API n'est jamais exposée au navigateur)
-- Modèle utilisé : `claude-sonnet-4-6`
+- Modèle utilisé : `claude-sonnet-5`
 - Tailwind CSS pour le style
 - Pas de base de données — tout se passe en mémoire côté navigateur, avec export Markdown
 
@@ -83,3 +83,57 @@ lib/
 npm run build
 npm run start
 ```
+
+## Déploiement sur Cloudflare (Workers)
+
+Le projet est pré-configuré avec [OpenNext pour Cloudflare](https://opennext.js.org/cloudflare) et
+[Wrangler](https://developers.cloudflare.com/workers/wrangler/), qui déploient l'app Next.js
+complète (pages + route API) sur Cloudflare Workers.
+
+### 1. Se connecter à Cloudflare
+
+```bash
+npx wrangler login
+```
+
+### 2. Renseigner la clé API en secret (production)
+
+La clé ne doit jamais être commitée ni mise en clair dans `wrangler.jsonc`. On la stocke comme
+secret Cloudflare :
+
+```bash
+npx wrangler secret put ANTHROPIC_API_KEY
+```
+
+(colle la clé quand c'est demandé — elle est alors chiffrée côté Cloudflare et exposée en
+`process.env.ANTHROPIC_API_KEY` à l'exécution, exactement comme en local)
+
+### 3. Déployer
+
+```bash
+npm run deploy
+```
+
+Cette commande build l'app avec OpenNext puis la déploie via Wrangler. L'URL de l'app
+(`https://<nom-du-worker>.<ton-sous-domaine>.workers.dev`) s'affiche à la fin du déploiement.
+Le nom du Worker est défini dans `wrangler.jsonc` (`klayer-decouverte-client` par défaut,
+modifiable librement).
+
+### Tester le build Cloudflare en local (optionnel)
+
+Pour tester le comportement exact du runtime Cloudflare Workers avant de déployer :
+
+```bash
+cp .dev.vars.example .dev.vars   # puis renseigne ANTHROPIC_API_KEY dans .dev.vars
+npm run preview
+```
+
+`.dev.vars` n'est jamais commité (voir `.gitignore`) — c'est l'équivalent de `.env.local` mais
+pour le runtime Wrangler/Workers.
+
+### Déploiement continu (optionnel)
+
+Pour un déploiement automatique à chaque push, connecte le dépôt GitHub dans le dashboard
+Cloudflare (**Workers & Pages → Create → Connect to Git**) et renseigne `ANTHROPIC_API_KEY`
+dans la section **Build variables and secrets** du projet. Cloudflare exécutera alors
+`npm run deploy` à chaque push sur la branche configurée.
