@@ -1,0 +1,45 @@
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        klayer: {
+          bg: "#FAF8F4",
+          card: "#FFFFFF",
+          border: "#E7E2D8",
+          ink: "#2A2622",
+          muted: "#78716C",
+        },
+        smarter: {
+          DEFAULT: "#2563EB",
+          bg: "#EFF4FE",
+          border: "#BFD3FB",
+        },
+        faster: {
+          DEFAULT: "#16A34A",
+          bg: "#EEF9F1",
+          border: "#BEE6CB",
+        },
+        agentic: {
+          DEFAULT: "#7C3AED",
+          bg: "#F4EFFE",
+          border: "#D9C8FA",
+        },
+      },
+      boxShadow: {
+        soft: "0 1px 2px rgba(42, 38, 34, 0.06), 0 1px 8px rgba(42, 38, 34, 0.04)",
+      },
+      borderRadius: {
+        xl2: "1rem",
+      },
+    },
+  },
+  plugins: [],
+};
+
+export default config;

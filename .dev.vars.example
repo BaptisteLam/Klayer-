@@ -1,0 +1,4 @@
+# Copiez ce fichier en .dev.vars pour tester `npm run preview` (wrangler) en local.
+# .dev.vars n'est jamais commité (voir .gitignore).
+NEXTJS_ENV=development
+ANTHROPIC_API_KEY=sk-ant-...
