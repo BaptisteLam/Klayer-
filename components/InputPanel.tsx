@@ -79,7 +79,7 @@ export function InputPanel({
           value={contexte}
           onChange={(e) => onContexteChange(e.target.value)}
           placeholder={`ex : ${SAMPLE_CONTEXTE}`}
-          className="w-full rounded-lg border border-klayer-border bg-klayer-card px-3.5 py-2.5 text-sm text-klayer-ink placeholder:text-klayer-muted/70 focus:border-smarter focus:outline-none focus:ring-2 focus:ring-smarter/20"
+          className="w-full rounded-lg border border-klayer-border bg-klayer-card px-3.5 py-2.5 text-sm text-klayer-ink placeholder:text-klayer-muted/70 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
         />
       </div>
 
@@ -98,7 +98,7 @@ export function InputPanel({
           onChange={(e) => onNotesChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Collez ici vos notes en vrac : bribes de phrases, citations du client, chiffres éparpillés..."
-          className="min-h-[360px] w-full flex-1 resize-none rounded-lg border border-klayer-border bg-klayer-card px-3.5 py-3 text-sm leading-relaxed text-klayer-ink placeholder:text-klayer-muted/70 focus:border-smarter focus:outline-none focus:ring-2 focus:ring-smarter/20"
+          className="min-h-[360px] w-full flex-1 resize-none rounded-lg border border-klayer-border bg-klayer-card px-3.5 py-3 text-sm leading-relaxed text-klayer-ink placeholder:text-klayer-muted/70 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
         />
         <p className="mt-1.5 text-xs text-klayer-muted">
           Astuce : <kbd className="rounded border border-klayer-border bg-klayer-bg px-1 py-0.5 font-sans">⌘/Ctrl</kbd>{" "}
@@ -110,11 +110,11 @@ export function InputPanel({
       <button
         onClick={onAnalyze}
         disabled={isLoading || !notes.trim()}
-        className="inline-flex items-center justify-center gap-2 rounded-lg bg-klayer-ink px-4 py-3 text-sm font-semibold text-klayer-bg shadow-soft transition hover:bg-klayer-ink/90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
       >
         {isLoading ? (
           <>
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-klayer-bg/30 border-t-klayer-bg" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
             Analyse en cours...
           </>
         ) : (

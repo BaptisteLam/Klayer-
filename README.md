@@ -51,10 +51,12 @@ Ouvre [http://localhost:3000](http://localhost:3000).
 2. Colle tes notes brutes de rendez-vous dans la grande zone de texte.
 3. Clique sur **Analyser**.
 4. La colonne de droite affiche la synthèse structurée : contexte, cartes d'irritants
-   chiffrés, matrice de priorisation, hypothèses de cas d'usage, prochaines étapes et
-   données manquantes à redemander au client.
-5. Clique sur **Exporter en Markdown** pour télécharger un fichier `.md` prêt à coller
-   dans un compte-rendu.
+   chiffrés, matrice de priorisation, hypothèses de cas d'usage (avec le levier Claude/Klayer
+   associé — Cowork, agents, ou app agentique sur mesure selon la catégorie), prochaines
+   étapes et données manquantes à redemander au client.
+5. Exporte le résultat : **Copier** (presse-papiers), **Exporter en JSON**, **Exporter en
+   Markdown**, ou **Générer le PowerPoint** — un récap client aux couleurs Klayer généré
+   entièrement côté navigateur (aucun appel serveur), prêt à envoyer.
 
 ## Structure du projet
 
@@ -70,12 +72,24 @@ components/
   IrritantCard.tsx
   PriorityMatrix.tsx
   HypothesisCard.tsx
+  SolutionsRecap.tsx       # récap "ce que Claude peut faire" par catégorie Klayer
 lib/
   types.ts                 # types TypeScript du schéma d'analyse
   systemPrompt.ts           # prompt système envoyé à Claude
   markdown.ts                # génération + téléchargement du .md
   klayerStyle.ts              # couleurs par catégorie Klayer
+  klayerSolutions.ts           # vocabulaire/positionnement Klayer (site klayer.ai) par catégorie
+  pptx.ts                       # génération du PowerPoint client (pptxgenjs)
+  sampleCase.ts                   # cas d'exemple (Colibri Home) pour le bouton "Charger un exemple"
 ```
+
+## Identité visuelle
+
+Le header et les boutons principaux utilisent la couleur de marque Klayer (bleu nuit,
+`brand` dans `tailwind.config.ts`, estimée à partir du nuancier fourni). Aucun fichier logo
+n'a pu être intégré tel quel — la marque est affichée en texte (wordmark "Klayer"). Pour un
+rendu pixel-perfect, fournir le fichier logo (SVG de préférence) et la charte de couleurs
+exacte (hex).
 
 ## Build production
 

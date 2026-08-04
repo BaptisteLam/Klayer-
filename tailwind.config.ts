@@ -15,6 +15,13 @@ const config: Config = {
           ink: "#2A2622",
           muted: "#78716C",
         },
+        brand: {
+          DEFAULT: "#12222C",
+          dark: "#0B161D",
+          light: "#1C333F",
+          bg: "#EDF1F2",
+          border: "#D3DBDD",
+        },
         smarter: {
           DEFAULT: "#2563EB",
           bg: "#EFF4FE",
