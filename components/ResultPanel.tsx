@@ -5,7 +5,9 @@ import type { AnalyseResult } from "@/lib/types";
 import { IrritantCard } from "@/components/IrritantCard";
 import { PriorityMatrix } from "@/components/PriorityMatrix";
 import { HypothesisCard } from "@/components/HypothesisCard";
+import { SolutionsRecap } from "@/components/SolutionsRecap";
 import { buildMarkdown, downloadJson, downloadMarkdown } from "@/lib/markdown";
+import { generateKlayerPptx } from "@/lib/pptx";
 
 function Section({
   title,
@@ -32,6 +34,8 @@ export function ResultPanel({
   onReset: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [isGeneratingPptx, setIsGeneratingPptx] = useState(false);
+  const [pptxError, setPptxError] = useState<string | null>(null);
 
   const handleExportMarkdown = () => {
     const markdown = buildMarkdown(result, contexteEntreprise || undefined);
@@ -50,6 +54,18 @@ export function ResultPanel({
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // clipboard API unavailable (permissions, non-secure context) — silently ignore
+    }
+  };
+
+  const handleGeneratePptx = async () => {
+    setIsGeneratingPptx(true);
+    setPptxError(null);
+    try {
+      await generateKlayerPptx(result, contexteEntreprise);
+    } catch {
+      setPptxError("La génération du PowerPoint a échoué. Réessayez.");
+    } finally {
+      setIsGeneratingPptx(false);
     }
   };
 
@@ -80,12 +96,23 @@ export function ResultPanel({
           </button>
           <button
             onClick={handleExportMarkdown}
-            className="inline-flex items-center gap-2 rounded-lg bg-klayer-ink px-3.5 py-2 text-sm font-medium text-klayer-bg shadow-soft transition hover:bg-klayer-ink/90"
+            className="inline-flex items-center gap-2 rounded-lg border border-klayer-border bg-klayer-card px-3.5 py-2 text-sm font-medium text-klayer-ink shadow-soft transition hover:bg-klayer-bg"
           >
             Exporter en Markdown
           </button>
+          <button
+            onClick={handleGeneratePptx}
+            disabled={isGeneratingPptx}
+            className="inline-flex items-center gap-2 rounded-lg bg-brand px-3.5 py-2 text-sm font-medium text-white shadow-soft transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isGeneratingPptx ? "Génération..." : "Générer le PowerPoint"}
+          </button>
         </div>
       </div>
+
+      {pptxError && (
+        <p className="-mt-4 text-right text-xs text-red-700">{pptxError}</p>
+      )}
 
       <Section title="Contexte">
         <div className="rounded-xl2 border border-klayer-border bg-klayer-card p-5 shadow-soft">
@@ -112,6 +139,8 @@ export function ResultPanel({
           ))}
         </div>
       </Section>
+
+      <SolutionsRecap hypotheses={result.hypotheses_cas_usage} />
 
       <Section title="Prochaines étapes">
         <div className="rounded-xl2 border border-klayer-border bg-klayer-card p-5 shadow-soft">

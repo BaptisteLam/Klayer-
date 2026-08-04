@@ -61,10 +61,15 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-klayer-bg">
-      <header className="border-b border-klayer-border bg-klayer-card">
-        <div className="mx-auto max-w-7xl px-6 py-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-klayer-muted">Klayer</p>
-          <h1 className="text-xl font-semibold text-klayer-ink">Assistant d&apos;analyse — découverte client</h1>
+      <header className="bg-brand">
+        <div className="mx-auto max-w-7xl px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+            Boutique IA · 100&nbsp;% Anthropic
+          </p>
+          <div className="mt-1 flex items-baseline gap-3">
+            <span className="text-xl font-bold tracking-tight text-white">Klayer</span>
+            <h1 className="text-sm text-white/80">Assistant d&apos;analyse — découverte client</h1>
+          </div>
         </div>
       </header>
 
@@ -110,7 +115,7 @@ export default function Home() {
 
           {isLoading && (
             <div className="flex h-full min-h-[300px] flex-col items-center justify-center rounded-xl2 border border-klayer-border bg-klayer-card p-10 text-center shadow-soft">
-              <span className="h-8 w-8 animate-spin rounded-full border-2 border-klayer-border border-t-smarter" />
+              <span className="h-8 w-8 animate-spin rounded-full border-2 border-klayer-border border-t-brand" />
               <p className="mt-4 text-sm text-klayer-muted">
                 Analyse de l&apos;entretien en cours — extraction des irritants, calcul des coûts,
                 priorisation...

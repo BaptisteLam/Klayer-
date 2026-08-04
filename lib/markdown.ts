@@ -1,4 +1,5 @@
 import type { AnalyseResult } from "@/lib/types";
+import { KLAYER_CATEGORY_ORDER, KLAYER_MECHANISMS } from "@/lib/klayerSolutions";
 
 function bulletList(items: string[]): string {
   if (!items.length) return "_Aucune._";
@@ -77,6 +78,28 @@ export function buildMarkdown(result: AnalyseResult, contexteEntreprise?: string
       lines.push(hypothese.argumentaire);
       lines.push("");
     });
+  }
+
+  lines.push(`## Ce que Claude peut faire (Klayer × Claude)`);
+  lines.push("");
+  const categoriesPresentes = KLAYER_CATEGORY_ORDER.filter((categorie) =>
+    result.hypotheses_cas_usage.some((h) => h.categorie_klayer === categorie)
+  );
+  if (!categoriesPresentes.length) {
+    lines.push("_Aucune hypothèse à relier à un levier Klayer._");
+  } else {
+    for (const categorie of categoriesPresentes) {
+      const mechanism = KLAYER_MECHANISMS[categorie];
+      const hypothesesLiees = result.hypotheses_cas_usage.filter((h) => h.categorie_klayer === categorie);
+      lines.push(`### ${categorie} — ${mechanism.titre}`);
+      lines.push("");
+      lines.push(mechanism.pitch);
+      lines.push("");
+      lines.push(`Leviers : ${mechanism.leviers.join(" · ")}`);
+      lines.push("");
+      lines.push(`Hypothèses concernées : ${hypothesesLiees.map((h) => h.titre).join(", ")}`);
+      lines.push("");
+    }
   }
 
   lines.push(`## Prochaines étapes`);
