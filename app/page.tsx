@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { InputPanel } from "@/components/InputPanel";
 import { ResultPanel } from "@/components/ResultPanel";
+import { SAMPLE_CONTEXTE, SAMPLE_NOTES } from "@/lib/sampleCase";
 import type { AnalyseResult } from "@/lib/types";
 
 export default function Home() {
@@ -39,6 +40,25 @@ export default function Home() {
     }
   }
 
+  function handleLoadExample() {
+    setContexte(SAMPLE_CONTEXTE);
+    setNotes(SAMPLE_NOTES);
+    setResult(null);
+    setError(null);
+  }
+
+  function handleClear() {
+    setContexte("");
+    setNotes("");
+    setResult(null);
+    setError(null);
+  }
+
+  function handleReset() {
+    setResult(null);
+    setError(null);
+  }
+
   return (
     <main className="min-h-screen bg-klayer-bg">
       <header className="border-b border-klayer-border bg-klayer-card">
@@ -49,21 +69,29 @@ export default function Home() {
       </header>
 
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 lg:grid-cols-2">
-        <div className="rounded-xl2 border border-klayer-border bg-klayer-card p-6 shadow-soft lg:sticky lg:top-8 lg:h-fit">
+        <div className="rounded-xl2 border border-klayer-border bg-klayer-card p-6 shadow-soft lg:sticky lg:top-8 lg:h-fit lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto">
           <InputPanel
             contexte={contexte}
             onContexteChange={setContexte}
             notes={notes}
             onNotesChange={setNotes}
             onAnalyze={handleAnalyze}
+            onLoadExample={handleLoadExample}
+            onClear={handleClear}
             isLoading={isLoading}
           />
         </div>
 
         <div>
           {error && (
-            <div className="mb-6 rounded-xl2 border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-              {error}
+            <div className="mb-6 flex items-start gap-3 rounded-xl2 border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              <span aria-hidden className="mt-0.5">
+                ⚠️
+              </span>
+              <div>
+                <p className="font-medium">L&apos;analyse a échoué</p>
+                <p className="mt-1 text-red-700">{error}</p>
+              </div>
             </div>
           )}
 
@@ -72,6 +100,10 @@ export default function Home() {
               <p className="text-sm text-klayer-muted">
                 Collez vos notes de rendez-vous à gauche puis cliquez sur &laquo; Analyser &raquo; pour
                 générer la synthèse structurée.
+              </p>
+              <p className="mt-2 text-xs text-klayer-muted">
+                Pas encore de notes sous la main ? Clique sur &laquo; Charger un exemple &raquo; pour voir l&apos;app
+                en action.
               </p>
             </div>
           )}
@@ -86,7 +118,7 @@ export default function Home() {
             </div>
           )}
 
-          {result && <ResultPanel result={result} contexteEntreprise={contexte} />}
+          {result && <ResultPanel result={result} contexteEntreprise={contexte} onReset={handleReset} />}
         </div>
       </div>
     </main>

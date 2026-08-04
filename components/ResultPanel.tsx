@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import type { AnalyseResult } from "@/lib/types";
 import { IrritantCard } from "@/components/IrritantCard";
 import { PriorityMatrix } from "@/components/PriorityMatrix";
 import { HypothesisCard } from "@/components/HypothesisCard";
-import { buildMarkdown, downloadMarkdown } from "@/lib/markdown";
+import { buildMarkdown, downloadJson, downloadMarkdown } from "@/lib/markdown";
 
 function Section({
   title,
@@ -24,25 +25,66 @@ function Section({
 export function ResultPanel({
   result,
   contexteEntreprise,
+  onReset,
 }: {
   result: AnalyseResult;
   contexteEntreprise: string;
+  onReset: () => void;
 }) {
-  const handleExport = () => {
+  const [copied, setCopied] = useState(false);
+
+  const handleExportMarkdown = () => {
     const markdown = buildMarkdown(result, contexteEntreprise || undefined);
     downloadMarkdown(markdown);
   };
 
+  const handleExportJson = () => {
+    downloadJson(result);
+  };
+
+  const handleCopy = async () => {
+    const markdown = buildMarkdown(result, contexteEntreprise || undefined);
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard API unavailable (permissions, non-secure context) — silently ignore
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-klayer-ink">Synthèse de découverte</h1>
-        <button
-          onClick={handleExport}
-          className="inline-flex items-center gap-2 rounded-lg border border-klayer-border bg-klayer-card px-3.5 py-2 text-sm font-medium text-klayer-ink shadow-soft transition hover:bg-klayer-bg"
-        >
-          Exporter en Markdown
-        </button>
+    <div className="animate-fade-in space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold text-klayer-ink">Synthèse de découverte</h1>
+          <button
+            onClick={onReset}
+            className="text-xs text-klayer-muted underline decoration-dotted underline-offset-2 hover:text-klayer-ink"
+          >
+            ← Nouvelle analyse
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleCopy}
+            className="inline-flex items-center gap-2 rounded-lg border border-klayer-border bg-klayer-card px-3.5 py-2 text-sm font-medium text-klayer-ink shadow-soft transition hover:bg-klayer-bg"
+          >
+            {copied ? "Copié ✓" : "Copier"}
+          </button>
+          <button
+            onClick={handleExportJson}
+            className="inline-flex items-center gap-2 rounded-lg border border-klayer-border bg-klayer-card px-3.5 py-2 text-sm font-medium text-klayer-ink shadow-soft transition hover:bg-klayer-bg"
+          >
+            Exporter en JSON
+          </button>
+          <button
+            onClick={handleExportMarkdown}
+            className="inline-flex items-center gap-2 rounded-lg bg-klayer-ink px-3.5 py-2 text-sm font-medium text-klayer-bg shadow-soft transition hover:bg-klayer-ink/90"
+          >
+            Exporter en Markdown
+          </button>
+        </div>
       </div>
 
       <Section title="Contexte">
