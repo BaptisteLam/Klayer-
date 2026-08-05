@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnalysisProgress } from "@/components/AnalysisProgress";
 import { InputPanel } from "@/components/InputPanel";
 import { ResultPanel } from "@/components/ResultPanel";
 import { SAMPLE_CONTEXTE, SAMPLE_NOTES } from "@/lib/sampleCase";
@@ -115,10 +116,9 @@ export default function Home() {
 
           {isLoading && (
             <div className="flex h-full min-h-[300px] flex-col items-center justify-center rounded-xl2 border border-klayer-border bg-klayer-card p-10 text-center shadow-soft">
-              <span className="h-8 w-8 animate-spin rounded-full border-2 border-klayer-border border-t-brand" />
-              <p className="mt-4 text-sm text-klayer-muted">
-                Analyse de l&apos;entretien en cours — extraction des irritants, calcul des coûts,
-                priorisation...
+              <AnalysisProgress />
+              <p className="mt-4 text-xs text-klayer-muted">
+                L&apos;analyse complète prend généralement 30 à 60 secondes.
               </p>
             </div>
           )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AnalyseResult } from "@/lib/types";
 import { IrritantCard } from "@/components/IrritantCard";
 import { PriorityMatrix } from "@/components/PriorityMatrix";
@@ -36,6 +36,14 @@ export function ResultPanel({
   const [copied, setCopied] = useState(false);
   const [isGeneratingPptx, setIsGeneratingPptx] = useState(false);
   const [pptxError, setPptxError] = useState<string | null>(null);
+  const [pptxElapsed, setPptxElapsed] = useState(0);
+  const pptxTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pptxTimerRef.current) clearInterval(pptxTimerRef.current);
+    };
+  }, []);
 
   const handleExportMarkdown = () => {
     const markdown = buildMarkdown(result, contexteEntreprise || undefined);
@@ -60,11 +68,14 @@ export function ResultPanel({
   const handleGeneratePptx = async () => {
     setIsGeneratingPptx(true);
     setPptxError(null);
+    setPptxElapsed(0);
+    pptxTimerRef.current = setInterval(() => setPptxElapsed((s) => s + 1), 1000);
     try {
       await generateKlayerPptx(result, contexteEntreprise);
-    } catch {
-      setPptxError("La génération du PowerPoint a échoué. Réessayez.");
+    } catch (err) {
+      setPptxError(err instanceof Error ? err.message : "La génération du PowerPoint a échoué. Réessayez.");
     } finally {
+      if (pptxTimerRef.current) clearInterval(pptxTimerRef.current);
       setIsGeneratingPptx(false);
     }
   };
@@ -105,14 +116,24 @@ export function ResultPanel({
             disabled={isGeneratingPptx}
             className="inline-flex items-center gap-2 rounded-lg bg-brand px-3.5 py-2 text-sm font-medium text-white shadow-soft transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isGeneratingPptx ? "Génération..." : "Générer le PowerPoint"}
+            {isGeneratingPptx ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Génération... ({pptxElapsed}s)
+              </>
+            ) : (
+              "Générer le PowerPoint"
+            )}
           </button>
         </div>
       </div>
 
-      {pptxError && (
-        <p className="-mt-4 text-right text-xs text-red-700">{pptxError}</p>
+      {isGeneratingPptx && (
+        <p className="-mt-4 text-right text-xs text-klayer-muted">
+          Claude conçoit et valide le fichier avec la compétence pptx — ça prend en général 1 à 3 minutes.
+        </p>
       )}
+      {pptxError && <p className="-mt-4 text-right text-xs text-red-700">{pptxError}</p>}
 
       <Section title="Contexte">
         <div className="rounded-xl2 border border-klayer-border bg-klayer-card p-5 shadow-soft">
