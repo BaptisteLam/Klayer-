@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-import { buildPptxPrompt } from "@/lib/pptxPrompt";
+import { buildKlayerDeck } from "@/lib/pptxDeck";
 import type { AnalyseResult } from "@/lib/types";
 
 export const runtime = "nodejs";
-// La compétence pptx passe par plusieurs allers-retours d'exécution de code
-// (génération, validation, rendu visuel) : ça prend en pratique 1 à 3 minutes.
-export const maxDuration = 300;
-
-const MODEL = "claude-sonnet-5";
 
 interface GeneratePptxBody {
   result: AnalyseResult;
@@ -16,14 +10,6 @@ interface GeneratePptxBody {
 }
 
 export async function POST(request: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY n'est pas configurée sur le serveur." },
-      { status: 500 }
-    );
-  }
-
   let body: GeneratePptxBody;
   try {
     body = await request.json();
@@ -35,67 +21,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Résultat d'analyse manquant ou invalide." }, { status: 400 });
   }
 
-  const client = new Anthropic({ apiKey });
-  const prompt = buildPptxPrompt(body.result, body.contexteEntreprise ?? "");
-
-  let fileId: string | undefined;
   try {
-    const response = await client.beta.messages.create({
-      model: MODEL,
-      max_tokens: 16000,
-      betas: ["code-execution-2025-08-25", "skills-2025-10-02", "context-management-2025-06-27"],
-      container: {
-        skills: [{ type: "anthropic", skill_id: "pptx", version: "latest" }],
-      },
-      tools: [{ type: "code_execution_20260521", name: "code_execution" }],
-      // Filet de sécurité : la génération d'un deck à plusieurs slides peut accumuler
-      // beaucoup de contexte (sorties d'exécution de code) sur les longs échanges d'outils
-      // internes à la compétence ; on efface les anciens tool_use/tool_result au fil de l'eau.
-      context_management: {
-        edits: [{ type: "clear_tool_uses_20250919", clear_tool_inputs: true }],
-      },
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    for (const block of response.content) {
-      if (block.type === "bash_code_execution_tool_result") {
-        const content = block.content;
-        if (content.type === "bash_code_execution_result") {
-          for (const item of content.content) {
-            if (item.type === "bash_code_execution_output") {
-              fileId = item.file_id;
-            }
-          }
-        }
-      }
-    }
-
-    if (!fileId) {
-      return NextResponse.json(
-        {
-          error:
-            "Claude n'a produit aucun fichier PowerPoint exploitable. Réessayez, ou simplifiez l'analyse (moins d'hypothèses) si le problème persiste.",
-        },
-        { status: 502 }
-      );
-    }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Erreur inconnue lors de l'appel à l'API Anthropic.";
-    return NextResponse.json({ error: `Erreur API Anthropic : ${message}` }, { status: 502 });
-  }
-
-  try {
-    const fileResponse = await client.beta.files.download(fileId, {
-      betas: ["files-api-2025-04-14"],
-    });
-    const arrayBuffer = await fileResponse.arrayBuffer();
+    const pres = buildKlayerDeck(body.result, body.contexteEntreprise ?? "");
+    const buffer = (await pres.write({ outputType: "nodebuffer" })) as Buffer;
+    const bytes = new Uint8Array(buffer);
 
     const contexteSlug = (body.contexteEntreprise || "decouverte-client")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .slice(0, 40);
 
-    return new NextResponse(arrayBuffer, {
+    return new NextResponse(bytes, {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
@@ -103,7 +39,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Erreur inconnue lors du téléchargement du fichier.";
-    return NextResponse.json({ error: `Fichier généré mais téléchargement impossible : ${message}` }, { status: 502 });
+    const message = err instanceof Error ? err.message : "Erreur inconnue lors de la génération du fichier.";
+    return NextResponse.json({ error: `Génération du PowerPoint impossible : ${message}` }, { status: 500 });
   }
 }
