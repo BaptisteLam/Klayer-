@@ -43,11 +43,17 @@ export async function POST(request: Request) {
     const response = await client.beta.messages.create({
       model: MODEL,
       max_tokens: 16000,
-      betas: ["code-execution-2025-08-25", "skills-2025-10-02"],
+      betas: ["code-execution-2025-08-25", "skills-2025-10-02", "context-management-2025-06-27"],
       container: {
         skills: [{ type: "anthropic", skill_id: "pptx", version: "latest" }],
       },
       tools: [{ type: "code_execution_20260521", name: "code_execution" }],
+      // Filet de sécurité : la génération d'un deck à plusieurs slides peut accumuler
+      // beaucoup de contexte (sorties d'exécution de code) sur les longs échanges d'outils
+      // internes à la compétence ; on efface les anciens tool_use/tool_result au fil de l'eau.
+      context_management: {
+        edits: [{ type: "clear_tool_uses_20250919", clear_tool_inputs: true }],
+      },
       messages: [{ role: "user", content: prompt }],
     });
 

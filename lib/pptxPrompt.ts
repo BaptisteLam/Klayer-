@@ -77,5 +77,8 @@ ${etapesList}
 
 7. Slide de clôture — fond ${BRAND_DARK}, centré : wordmark "KLAYER", accroche "Votre partenaire pour réussir avec Claude.", puis "contact@klayer.ai · Paris, France".
 
-Une fois le fichier généré, valide-le avec le script de validation de la compétence, puis place-le dans le dossier de sortie. Réponds ensuite en une phrase confirmant que le fichier est prêt, sans détailler les étapes techniques.`;
+CONTRAINTE IMPORTANTE SUR LA VALIDATION — à respecter impérativement pour ne pas saturer le contexte :
+Ne convertis PAS le fichier en PDF/JPEG et ne visualise AUCUNE image de slide rendue (pas d'étape "view" sur un fichier image). Avec ${2 + 1 + result.hypotheses_cas_usage.length + 3} slides, cette étape de rendu visuel consomme un volume de contexte qui dépasse la limite du modèle et fait échouer la génération. Valide uniquement avec le script validate.py de la compétence (contrôle structurel) et, si besoin, une inspection du texte via python-pptx — jamais de rendu image.
+
+Une fois le fichier généré et validé (script uniquement, sans rendu visuel), place-le dans le dossier de sortie. Réponds ensuite en une phrase confirmant que le fichier est prêt, sans détailler les étapes techniques.`;
 }
