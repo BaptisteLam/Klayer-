@@ -1,6 +1,10 @@
 import PptxGenJS from "pptxgenjs";
 import type { AnalyseResult, KlayerCategorie } from "@/lib/types";
 import { KLAYER_MECHANISMS, KLAYER_CATEGORY_ORDER } from "@/lib/klayerSolutions";
+import { KLAYER_LOGO_BASE64 } from "@/lib/klayerLogo";
+
+const LOGO_DATA_URI = `image/png;base64,${KLAYER_LOGO_BASE64}`;
+const LOGO_RATIO = 1594 / 1024;
 
 const BRAND = "12222C";
 const BRAND_DARK = "0B161D";
@@ -55,7 +59,19 @@ export function buildKlayerDeck(result: AnalyseResult, contexteEntreprise: strin
   // 1. Titre
   const s1 = pres.addSlide();
   s1.background = { color: BRAND };
-  s1.addText("KLAYER", { x: MARGIN_X, y: 2.5, w: CONTENT_W, h: 0.55, fontSize: 18, bold: true, color: WHITE, charSpacing: 4 });
+  const s1LogoH = 0.42;
+  const s1LogoW = s1LogoH * LOGO_RATIO;
+  s1.addImage({ data: LOGO_DATA_URI, x: MARGIN_X, y: 2.44, w: s1LogoW, h: s1LogoH });
+  s1.addText("KLAYER", {
+    x: MARGIN_X + s1LogoW + 0.15,
+    y: 2.5,
+    w: CONTENT_W - s1LogoW - 0.15,
+    h: 0.55,
+    fontSize: 18,
+    bold: true,
+    color: WHITE,
+    charSpacing: 4,
+  });
   s1.addText("Synthèse de découverte client", { x: MARGIN_X, y: 3.05, w: CONTENT_W, h: 1.1, fontSize: 34, bold: true, color: WHITE });
   if (contexteEntreprise) {
     s1.addText(contexteEntreprise, { x: MARGIN_X, y: 4.15, w: CONTENT_W, h: 0.6, fontSize: 15, color: "C7D2D6" });
@@ -184,7 +200,19 @@ export function buildKlayerDeck(result: AnalyseResult, contexteEntreprise: strin
     { x: MARGIN_X, y: 1.55, w: CONTENT_W, h: 3.6, fontSize: 15, color: WHITE, valign: "top", lineSpacingMultiple: 1.5 }
   );
   s5.addShape("line", { x: MARGIN_X, y: 5.5, w: CONTENT_W, h: 0, line: { color: "2A3A44", width: 1 } });
-  s5.addText("KLAYER", { x: MARGIN_X, y: 5.75, w: CONTENT_W, h: 0.4, fontSize: 14, bold: true, color: WHITE, charSpacing: 3 });
+  const s5LogoH = 0.32;
+  const s5LogoW = s5LogoH * LOGO_RATIO;
+  s5.addImage({ data: LOGO_DATA_URI, x: MARGIN_X, y: 5.79, w: s5LogoW, h: s5LogoH });
+  s5.addText("KLAYER", {
+    x: MARGIN_X + s5LogoW + 0.15,
+    y: 5.75,
+    w: CONTENT_W - s5LogoW - 0.15,
+    h: 0.4,
+    fontSize: 14,
+    bold: true,
+    color: WHITE,
+    charSpacing: 3,
+  });
   s5.addText("Votre partenaire pour réussir avec Claude.  ·  contact@klayer.ai  ·  Paris, France", {
     x: MARGIN_X,
     y: 6.2,
