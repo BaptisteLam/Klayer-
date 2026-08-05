@@ -9,12 +9,12 @@ export const runtime = "nodejs";
 const MODEL = "claude-sonnet-5";
 
 export async function POST(request: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.API_KEY_KLAYER;
   if (!apiKey) {
     return NextResponse.json(
       {
         error:
-          "ANTHROPIC_API_KEY n'est pas configurée sur le serveur. Ajoutez-la dans .env.local puis redémarrez le serveur.",
+          "Aucune clé API Anthropic configurée sur le serveur (variable ANTHROPIC_API_KEY ou API_KEY_KLAYER). Ajoutez-la dans .env.local en local, ou dans les variables d'environnement de l'hébergeur en production.",
       },
       { status: 500 }
     );

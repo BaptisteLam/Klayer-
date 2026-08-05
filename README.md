@@ -161,6 +161,7 @@ build) :
 > (Next.js classique) et ne génère jamais `.open-next/`, ce dont `wrangler deploy` a besoin —
 > le déploiement échoue alors avec `Could not find compiled Open Next config`.
 
-Renseigne aussi `ANTHROPIC_API_KEY` dans la section **Build variables and secrets** (ou
-**Settings → Variables and Secrets**) du projet, en tant que **secret** (pas variable en clair).
-Cloudflare redéploiera automatiquement à chaque push sur la branche configurée.
+Renseigne aussi `ANTHROPIC_API_KEY` (ou `API_KEY_KLAYER`, les deux noms sont acceptés) dans la
+section **Build variables and secrets** (ou **Settings → Variables and Secrets**) du projet, en
+tant que **secret** (pas variable en clair). Cloudflare redéploiera automatiquement à chaque push
+sur la branche configurée.
