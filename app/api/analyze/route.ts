@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "@/lib/systemPrompt";
 import { ANALYZE_ERROR_MARKER } from "@/lib/analyzeStream";
 import type { AnalyzeRequestBody } from "@/lib/types";
 
+// @opennextjs/cloudflare requires the nodejs runtime (its own docs recommend
+// against "edge" for the default function bundle). We talk to the Anthropic
+// API directly via fetch + hand-rolled SSE parsing instead of the SDK client
+// so this route has no Node-specific dependencies either way.
 export const runtime = "nodejs";
 
 const MODEL = "claude-sonnet-5";
+const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.API_KEY_KLAYER;
@@ -37,34 +41,84 @@ export async function POST(request: Request) {
     );
   }
 
-  const client = new Anthropic({ apiKey });
-
   const userMessage = contexte
     ? `Contexte entreprise fourni par le consultant :\n${contexte}\n\nNotes brutes de l'entretien :\n${notes}`
     : `Notes brutes de l'entretien :\n${notes}`;
 
-  // L'analyse prend 30 à 60 secondes : la plupart des hébergeurs (fonctions
-  // serverless, proxys) coupent une réponse tamponnée bien avant. En streamant
-  // les octets au fil de l'eau, la connexion reste active et on évite le 504.
+  let upstream: Response;
+  try {
+    upstream = await fetch(ANTHROPIC_API_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 8000,
+        system: SYSTEM_PROMPT,
+        stream: true,
+        messages: [{ role: "user", content: userMessage }],
+      }),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erreur réseau lors de l'appel à l'API Anthropic.";
+    return NextResponse.json({ error: `Erreur API Anthropic : ${message}` }, { status: 502 });
+  }
+
+  if (!upstream.ok || !upstream.body) {
+    let message = `Erreur API Anthropic (HTTP ${upstream.status}).`;
+    try {
+      const errBody = (await upstream.json()) as { error?: { message?: string } };
+      message = errBody?.error?.message ?? message;
+    } catch {
+      // corps d'erreur non-JSON : on garde le message générique
+    }
+    return NextResponse.json({ error: `Erreur API Anthropic : ${message}` }, { status: 502 });
+  }
+
   const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  const upstreamBody = upstream.body;
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      const reader = upstreamBody.getReader();
+      let buffer = "";
       try {
-        const anthropicStream = client.messages.stream({
-          model: MODEL,
-          max_tokens: 8000,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content: userMessage }],
-        });
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
 
-        anthropicStream.on("text", (delta) => {
-          controller.enqueue(encoder.encode(delta));
-        });
+          const events = buffer.split("\n\n");
+          buffer = events.pop() ?? "";
 
-        await anthropicStream.finalMessage();
+          for (const rawEvent of events) {
+            const dataLine = rawEvent.split("\n").find((line) => line.startsWith("data:"));
+            if (!dataLine) continue;
+            const jsonStr = dataLine.slice(5).trim();
+            if (!jsonStr) continue;
+
+            let parsed: { type?: string; delta?: { type?: string; text?: string }; error?: { message?: string } };
+            try {
+              parsed = JSON.parse(jsonStr);
+            } catch {
+              continue;
+            }
+
+            if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta" && parsed.delta.text) {
+              controller.enqueue(encoder.encode(parsed.delta.text));
+            } else if (parsed.type === "error") {
+              const message = parsed.error?.message ?? "Erreur inconnue renvoyée par l'API Anthropic.";
+              controller.enqueue(encoder.encode(`${ANALYZE_ERROR_MARKER}${message}`));
+            }
+          }
+        }
         controller.close();
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Erreur inconnue lors de l'appel à l'API Anthropic.";
+        const message = err instanceof Error ? err.message : "Erreur inconnue lors de la lecture du flux Anthropic.";
         controller.enqueue(encoder.encode(`${ANALYZE_ERROR_MARKER}${message}`));
         controller.close();
       }
