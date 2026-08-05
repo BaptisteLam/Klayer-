@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { AnalysisProgress } from "@/components/AnalysisProgress";
 import { InputPanel } from "@/components/InputPanel";
 import { ResultPanel } from "@/components/ResultPanel";
 import { SAMPLE_CONTEXTE, SAMPLE_NOTES } from "@/lib/sampleCase";
+import { ANALYZE_ERROR_MARKER, extractJsonFromModelText } from "@/lib/analyzeStream";
 import type { AnalyseResult } from "@/lib/types";
 
 export default function Home() {
@@ -26,14 +28,56 @@ export default function Home() {
         body: JSON.stringify({ contexte, notes }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        setError(data.error ?? "Une erreur est survenue lors de l'analyse.");
+        let message = "Une erreur est survenue lors de l'analyse.";
+        try {
+          const data = await response.json();
+          message = data.error ?? message;
+        } catch {
+          // corps non-JSON (page d'erreur de l'hébergeur, timeout amont) : on garde le message générique
+        }
+        setError(message);
         return;
       }
 
-      setResult(data as AnalyseResult);
+      if (!response.body) {
+        setError("Réponse vide du serveur.");
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += decoder.decode(value, { stream: true });
+      }
+      accumulated += decoder.decode();
+
+      if (accumulated.includes(ANALYZE_ERROR_MARKER)) {
+        const message = accumulated.split(ANALYZE_ERROR_MARKER)[1]?.trim();
+        setError(message ? `Erreur API Anthropic : ${message}` : "Erreur lors de l'appel à l'API Anthropic.");
+        return;
+      }
+
+      const jsonCandidate = extractJsonFromModelText(accumulated);
+      let parsed: AnalyseResult;
+      try {
+        parsed = JSON.parse(jsonCandidate) as AnalyseResult;
+      } catch {
+        setError(
+          "Le modèle a renvoyé une réponse qui n'est pas un JSON valide. Réessayez, ou reformulez vos notes si le problème persiste."
+        );
+        return;
+      }
+
+      if (!parsed.irritants || !Array.isArray(parsed.irritants)) {
+        setError("La réponse du modèle ne correspond pas au schéma attendu (champ 'irritants' manquant).");
+        return;
+      }
+
+      setResult(parsed);
     } catch {
       setError("Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.");
     } finally {
@@ -67,7 +111,8 @@ export default function Home() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
             Boutique IA · 100&nbsp;% Anthropic
           </p>
-          <div className="mt-1 flex items-baseline gap-3">
+          <div className="mt-1 flex items-center gap-3">
+            <Image src="/klayer-logo.png" alt="Klayer" width={28} height={18} className="shrink-0" priority />
             <span className="text-xl font-bold tracking-tight text-white">Klayer</span>
             <h1 className="text-sm text-white/80">Assistant d&apos;analyse — découverte client</h1>
           </div>
